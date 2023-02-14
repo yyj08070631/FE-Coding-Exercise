@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <div id="app">
+  </div>
+  <script>
+    class Promise2 {
+      constructor (executer) {
+        this.status = 'pending'
+        this.value = undefined
+        this.reason = undefined
+        this.onFullfilledCallbacks = []
+        this.onRejectedCallbacks = []
+        const resolve = value => {
+          if (this.status === 'pending') {
+            this.status = 'fullfilled'
+            this.value = value
+            this.onFullfilledCallbacks.forEach(cb => cb(value))
+          }
+        }
+        const reject = reason => {
+          if (this.status === 'pending') {
+            this.status = 'rejected'
+            this.reason = reason
+            this.onRejectedCallbacks.forEach(cb => cb(reason))
+          }
+        }
+        try {
+          executer(resolve, reject)
+        } catch (err) {
+          reject(err)
+        }
+      }
+      then (onFullfilled, onRejected) {
+        onFullfilled = typeof onFullfilled === 'function' ? onFullfilled : val => val
+        onRejected = typeof onRejected === 'function' ? onRejected : reason => { throw reason }
+
+        const thenPromise = new Promise2((resolve, reject) => {
+          const resolvePromise = (cb, flag) => {
+            setTimeout(() => {
+              try {
+                const value = cb(flag ? this.value : this.reason)
+                resolve(value)
+              } catch (err) {
+                reject(err)
+              }
+            })
+          }
+
+          if (this.status === 'pending') {
+            this.onFullfilledCallbacks.push(resolvePromise.bind(this, onFullfilled, true))
+            this.onRejectedCallbacks.push(resolvePromise.bind(this, onRejected, false))
+          }
+          if (this.status === 'fullfilled') {
+            resolvePromise(onFullfilled, true)
+          }
+          if (this.status === 'rejected') {
+            resolvePromise(onRejected, false)
+          }
+        })
+        return thenPromise
+      }
+      catch (onRejected) {
+        return this.then(null, onRejected)
+      }
+      static all (promises) {
+        const res = []
+        let count = 0
+        return new Promise2((resolve, reject) => {
+          const addData = (index, data) => {
+            res[index] = data
+            count++
+            if (count === promises.length) resolve(res)
+          }
+          promises.forEach((promise, index) => {
+            if (promise instanceof Promise2) {
+              promise.then(data => {
+                addData(index, data)
+              }).catch(err => {
+                addData(index, err)
+              })
+            } else {
+              addData(index, promise)
+            }
+          })
+        })
+      }
+      static race (promises) {
+        return new Promise2((resolve, reject) => {
+          promises.forEach((promise, index) => {
+            if (promise instanceof Promise2) {
+              promise.then(data => resolve(data), err => reject(err))
+            } else {
+              resolve(promise)
+            }
+          })
+        })
+      }
+    }
+
+    // test case
+    console.log(1)
+    const p1 = new Promise2((resolve, reject) => {
+      setTimeout(() => {
+        Math.random() < 0.5 ? resolve('p1 搞定') : reject(new Error('p1 cnm'))
+      }, 1000)
+    }).then(res => {
+      console.log(res)
+      return res
+    })
+    .catch(console.error)
+    const p2 = new Promise2((resolve, reject) => {
+      Math.random() < 0.5 ? resolve('p2 搞定') : reject(new Error('p2 cnm'))
+    }).then(res => {
+      console.log(res)
+      return res
+    })
+    .then(res => {
+      console.log(res)
+      return res
+    })
+    .catch(console.error)
+    console.log(2)
+    Promise2.all([p1, p2, 1]).then(([res1, res2, res3]) => {
+      console.log('all succ', res1, res2, res3)
+    }).catch(([err1, err2, err3]) => {
+      console.log('all error', err1, err2, err3)
+    })
+    Promise2.race([p1, p2]).then(res => {
+      console.log('race succ', res)
+    }).catch(res => {
+      console.log('race error', res)
+    })
+  </script>
+</body>
+
+</html>
