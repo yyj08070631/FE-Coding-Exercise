@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Big-File</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div>
+      <label for="file">File:</label>
+      <input type="file" name="" id="file" @change="handleInputChange">
+    </div>
+    <div>
+      <label for="progress">Status:</label>
+      <meter id="progress" min="0" max="100" :value="progressRate"></meter>
+      <span>{{ progressRate }}%</span>
+    </div>
+    <div>
+      <button @click="uploadHandler">上传</button>
+    </div>
+    <div>
+      <table border="1">
+        <thead>
+          <tr>
+            <td>chunk hash</td>
+            <td>size(kb)</td>
+            <td>progress</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(chunk, index) in chunks" :key="chunk.hash">
+            <td>{{ chunk.hash }}</td>
+            <td>{{ Math.floor(chunk.file.size / 1024) }}</td>
+            <td><meter id="progress" min="0" max="100" :value="chunk.progress"></meter>{{ chunk.progress }}%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    const request = ({
+      url,
+      method = "post",
+      data,
+      headers = {},
+      onProgress = e => e,
+      requestList
+    }) => {
+      return new Promise(resolve => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = onProgress
+        xhr.open(method, url);
+        Object.keys(headers).forEach(key =>
+          xhr.setRequestHeader(key, headers[key])
+        );
+        xhr.send(data);
+        xhr.onload = e => {
+          resolve({
+            data: e.target.response
+          });
+        };
+      });
+    }
+
+    // chunk size
+    const SIZE = 1 * 1024 * 1024
+
+    const app = new Vue({
+      el: '#app',
+      data: {
+        file: null,
+        chunks: []
+      },
+      computed: {
+        progressRate: vm => Math.round(
+          vm.chunks.reduce((accu, curr) => accu + (curr.progress / vm.chunks.length), 0)
+        ),
+      },
+      methods: {
+        createFileChunk (file, size = SIZE) {
+          if (!file) return []
+
+          const fileChunks = []
+          let curr = 0
+          while (curr < file.size) {
+            fileChunks.push({ file: file.slice(curr, curr += size) })
+          }
+          return fileChunks
+        },
+        async uploadFileChunks () {
+          return await Promise.all(this.chunks.map((item, index) => {
+            const formData = new FormData()
+            formData.append('chunk', item.file)
+            formData.append('hash', this.file.name + '_' + index)
+            formData.append('filename', this.file.name)
+            return request({
+              url: '/upload',
+              method: 'post',
+              data: formData,
+              onProgress: e => {
+                item.progress = Math.round(e.loaded / e.total * 100)
+              }
+            })
+          }))
+        },
+        mergeRequest () {
+          return request({
+            url: '/merge',
+            method: 'post',
+            headers: { 'content-type': 'application/json' },
+            data: JSON.stringify({ filename: this.file.name, size: SIZE })
+          }).then(res => {
+            console.log('mergeRequest: ', res) 
+            return res
+          })
+        },
+        handleInputChange (e) {
+          const [file] = e.target.files
+          if (!file) return
+          this.file = file
+        },
+        async uploadHandler () {
+          if (!this.file) return
+          this.chunks = this.createFileChunk(this.file).map((chunk, index) => ({
+            ...chunk,
+            filename: this.file.name,
+            hash: this.file.name + '_' + index,
+            progress: 0,
+          }))
+
+          const resList = await this.uploadFileChunks()
+          console.log('uploadFileChunks: ', resList)
+          await this.mergeRequest()
+        }
+      }
+    })
+  </script>
+</body>
+</html>
