@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Big-File</title>
   <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+  <script src="/spark-md5.min.js"></script>
 </head>
 <body>
   <div id="app">
@@ -121,6 +122,15 @@
           const [file] = e.target.files
           if (!file) return
           this.file = file
+          console.time('gen hash')
+          const spark = new SparkMD5.ArrayBuffer()
+          const reader = new FileReader()
+          reader.readAsArrayBuffer(file)
+          reader.onload = e => {
+            spark.append(e.target.result)
+            console.log(spark.end())
+            console.timeEnd('gen hash')
+          }
         },
         async uploadHandler () {
           if (!this.file) return

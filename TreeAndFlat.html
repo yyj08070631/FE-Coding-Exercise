@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    const merge = (o1, o2) => {
+      o1 = o1 || {}
+      o2 = o2 || {}
+      const children = [...(o1.children || []), ...(o2.children || [])]
+      Object.assign(o1, o2, { children })
+      return o1
+    }
+    const flatToTree = data => {
+      const idMap = {}
+      const rootArr = []
+      for (let i = 0; i < data.length; i++) {
+        const val = data[i]
+        const { pId, id } = val
+        idMap[id] = merge(idMap[id] || {}, val)
+        if (pId) {
+          if (!idMap[pId]) {
+            idMap[pId] = { id: pId, children: [idMap[id]] }
+          } else if (idMap[pId].children) {
+            idMap[pId].children.push(idMap[id])
+          } else {
+            idMap[pId].children = [idMap[id]]
+          }
+        }
+        if (!pId) rootArr.push(idMap[id])
+      }
+      return rootArr
+    }
+    const flatData = [
+      { id: 7, pId: 3, value: 'Nene' },
+      { id: 1, pId: null, value: 'James Harden' },
+      { id: 2, pId: 1, value: 'Eric Gorden' },
+      { id: 3, pId: 1, value: 'Trevo Ariza' },
+      { id: 4, pId: 1, value: 'Clint Capela' },
+      { id: 5, pId: 2, value: 'Ryan Anderson' },
+      { id: 6, pId: 2, value: 'Patrik Beverly' },
+    ]
+    console.log(JSON.stringify(flatToTree(flatData), null, 2))
+
+    const treeToFlat = data => {
+      const res = []
+      const traverse = (node, pId) => {
+        if (!node) return
+        const { id, value } = node
+        res.push({ id, value, pId })
+        for (let i = 0; i < (node.children || []).length; i++) {
+          traverse(node.children[i], node.id || null)
+        }
+      }
+      traverse(data, null)
+      return res
+    }
+    const treeData = {
+      id: 1,
+      value: 'scola',
+      children: [
+        { id: 2, value: 'yao', children: [{ id: 5, value: 'alston' }, { id: 6, value: 'francis' }] },
+        { id: 3, value: 'artest' },
+        { id: 4, value: 'hayes' },
+      ]
+    }
+    const flatResult = treeToFlat(treeData)
+    console.log(JSON.stringify(flatResult, null, 2))
+    console.log(JSON.stringify(flatToTree(flatResult), null, 2))
+  </script>
+</body>
+</html>
