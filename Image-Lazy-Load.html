@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image-Lazy-Load</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+    }
+    .placeholder {
+      width: 100dvw;
+      height: 600dvh;
+      background-color: yellowgreen;
+    }
+    .nice {
+      display: block;
+      padding-bottom: 50%;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="placeholder"></div>
+    <img v-for="item in 11"
+      :src="`https://geekhouse.top/posts/engineering_html-webpack-plugin_4.x_change/16db9fa2efb02b2d~tplv-t2oaga2asx-image-20211014205410815.image?_t=${+new Date()}`"
+      :key="item"
+      loading="lazy"
+      decoding="async"
+      class="nice">
+  </div>
+  <script>
+    const app = new Vue({
+      el: '#app',
+      data: {
+        file: 1,
+        chunks: []
+      },
+    })
+  </script>
+</body>
+</html>

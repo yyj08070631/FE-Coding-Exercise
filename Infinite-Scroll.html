@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infinite-Scroll</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+  <style>
+    #app {
+      position: relative;
+      height: 51dvh;
+      background-color: aquamarine;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+    .phantom {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+    }
+    .list {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+    }
+    .item {
+      display: flex;
+      align-items: center;
+      border: 1px solid red;
+      padding: 10px;
+    }
+    /* .item:not(:first-child) {
+      margin-top: 10px;
+    } */
+  </style>
+</head>
+<body>
+  <div id="app" ref="scrollContainer" @scroll="scrollHandler">
+    <div class="phantom" :style="{ height: `${listHeight}px` }"></div>
+    <div class="list" :style="{ transform: `translate3d(0, ${startOffset}px, 0)` }">
+      <div v-for="(item, index) in viewList"
+        :class="[`item-${item}`, 'item']"
+        :index="item"
+        :key="item">
+        <div>
+          <img src="https://pic4.zhimg.com/80/v2-a78e25d5f2d1012f1631fa0b5f434f9f_1440w.webp" width="100" alt="">
+        </div>
+        <div style="margin-left:10px;">No.{{ item }}: {{ item % 2 ? 'Lorem ipsum dolor sit amet consectetur, adipisicing elit. Aliquam facilis eius, officiis, fugit illo illum optio ipsum ipsam enim nisi porro consequuntur aliquid nostrum natus veniam repellendus eos, doloribus autem! Lorem ipsum dolor sit amet consectetur, adipisicing elit. Aliquam facilis eius, officiis, fugit illo illum optio ipsum ipsam enim nisi porro consequuntur aliquid nostrum natus veniam repellendus eos, doloribus autem! Lorem ipsum dolor sit amet consectetur, adipisicing elit. Aliquam facilis eius, officiis, fugit illo illum optio ipsum ipsam enim nisi porro consequuntur aliquid nostrum natus veniam repellendus eos, doloribus autem!' : 'aaaaaaaaaa' }}</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const SIZE = 96
+    const originData = new Array(100000).fill(0).map((val, key) => key)
+
+    const app = new Vue({
+      el: '#app',
+      data: {
+        list: originData,
+        sizes: originData.map(val => ({ height: SIZE })),
+        // internal
+        startIndex: 0,
+        endIndex: 0,
+        startOffset: 0,
+        scrollContainerHeight: 0,
+        resizeObserver: null,
+      },
+      computed: {
+        viewList: vm => vm.list.slice(vm.startIndex, vm.endIndex + 1),
+        listHeight: vm => vm.sizes.reduce((accu, curr) => accu + curr.height, 0),
+      },
+      methods: {
+        initScrollContainerHeight () {
+          this.scrollContainerHeight = this.$refs.scrollContainer.offsetHeight
+        },
+        scrollHandler () {
+          const oldStartIndex = this.startIndex
+          const oldEndIndex = this.endIndex
+          const { startIndex, startHeight } = this.getStartInfo()
+          const { endIndex, endHeight } = this.getEndInfo(startIndex, startHeight)
+          this.startIndex = startIndex
+          this.endIndex = endIndex
+          // 产生变化才更新渲染相关的状态
+          if (oldStartIndex !== startIndex || oldEndIndex !== endIndex) {
+            this.startOffset = startHeight
+            this.unobserve(oldStartIndex, oldEndIndex)
+            this.$nextTick(() => {
+              this.observe(startIndex, endIndex)
+            })
+          }
+        },
+        getStartInfo () {
+          const scrollTop = this.$refs.scrollContainer.scrollTop
+          const scrollTopWithBuffer = Math.max(scrollTop - this.scrollContainerHeight, 0)
+          let totalHeight = 0, i = 0
+          for (; i < this.sizes.length; i++) {
+            totalHeight += this.sizes[i].height
+            if (totalHeight > scrollTopWithBuffer) return { startIndex: i, startHeight: totalHeight - this.sizes[i].height }
+          }
+          return { startIndex: i, startHeight: totalHeight }
+        },
+        getEndInfo (startIndex, startHeight) {
+          const scrollTop = this.$refs.scrollContainer.scrollTop
+          const endPositionWithBuffer = scrollTop + this.scrollContainerHeight * 2
+          let totalHeight = startHeight, i = startIndex
+          for (; i < this.sizes.length; i++) {
+            totalHeight += this.sizes[i].height
+            if (totalHeight >= endPositionWithBuffer) return { endIndex: i, endHeight: totalHeight }
+          }
+          return { endIndex: i, endHeight: totalHeight }
+        },
+        observe (startIndex, endIndex) {
+          if (!this.resizeObserver) return
+          for (let i = startIndex; i < endIndex; i++) {
+            const el = document.querySelector(`.item-${i}`)
+            this.resizeObserver.observe(el)
+          }
+        },
+        unobserve (oldStartIndex, oldEndIndex) {
+          if (!this.resizeObserver) return
+          for (let i = oldStartIndex; i < oldEndIndex; i++) {
+            const el = document.querySelector(`.item-${i}`)
+            this.resizeObserver.unobserve(el)
+          }
+        },
+        initResizeObserver () {
+          if (!this.resizeObserver) {
+            this.resizeObserver = new ResizeObserver(entries => {
+              requestAnimationFrame(() => {
+                if (!Array.isArray(entries)) return
+                for (let i = 0; i < entries.length; i++) {
+                  const el = entries[i].target
+                  if (el && el.offsetHeight) {
+                    const elIndex = el.getAttribute('index')
+                    this.sizes[elIndex].height = el.offsetHeight
+                    // console.log('elIndex: ', elIndex, 'offsetHeight: ', el.offsetHeight)
+                  }
+                }
+              })
+            })
+          }
+        },
+      },
+      mounted () {
+        this.initResizeObserver()
+        this.initScrollContainerHeight()
+        this.scrollHandler()
+      },
+    })
+  </script>
+</body>
+</html>
