@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    // 递归版
+    const promiseLimitByDepth = (promises, limit) => {
+      const { length } = promises
+      limit = limit > length ? length : limit
+      return new Promise(resolve => {
+        let finishedNum = 0, i = 0, res = []
+        const request = async () => {
+          res[i] = await promises[i]
+          finishedNum++
+          console.log(finishedNum, i, limit)
+          if (i < length) {
+            request()
+            i++
+          }
+          if (finishedNum >= length) {
+            resolve(res)
+          }
+        }
+        for (; i < limit; i++) {
+          request()
+        }
+      })
+    }
+    const newFetch = (delay) => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          console.log(delay, 'done.')
+          resolve(delay);
+        }, delay);
+      });
+    };
+    // promiseLimitByDepth([2000, 1000, 3000, 2500, 1200, 5000, 3500, 2300].map(delay => newFetch(delay)), 2).then(console.log);
+
+    const createPromiseLimit = limit => {
+      return async promises => await promiseLimitByDepth(promises, limit)
+    }
+    const promiseLimitByDepth2 = createPromiseLimit(2)
+    promiseLimitByDepth2([2000, 1000, 3000, 2500, 1200, 5000, 3500, 2300].map(delay => newFetch(delay)))
+  </script>
+</body>
+</html>
