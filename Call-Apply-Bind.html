@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Call-Apply-Bind</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    Function.prototype.call2 = function (context, ...args) {
+      context = context || window
+      context.fn = this
+      var res = context.fn(...args)
+      delete context.fn
+      return res
+    }
+    Function.prototype.apply2 = function (context, args) {
+      context = context || window
+      context.fn = this
+      var res = context.fn(...args)
+      delete context.fn
+      return res
+    }
+    Function.prototype.bind2 = function (context, ...args) {
+      // 返回新函数，改变this指向，预传参数
+      context = context || window
+      var originFn = this
+      var temp = function () {}
+      var _fn = function (...innerArgs) {
+        return originFn.apply2(this instanceof temp ? this : context, [...args, ...innerArgs])
+      }
+      temp.prototype = originFn.prototype
+      _fn.prototype = new temp()
+      return _fn
+    }
+
+    var o = { foo: 1, bar: 2 }
+    var o1 = { foo: 3, bar: 4 }
+    var fn = function (field1, field2) {
+      console.log(this.foo, this.bar, field1, field2, this.boom)
+    }
+    fn.call2(o, 3, 4)
+    fn.apply2(o, [3, 4])
+    var fn1 = fn.bind2(o, 3)
+    fn1(4)
+    var fn2 = fn1.bind2(o1, 4)
+    fn2()
+  </script>
+</body>
+</html>
