@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    function myReduce (arr, fn, init = null) {
+      let accu = init
+      for (let i = 0; i < arr.length; i++) {
+        accu = fn(accu, arr[i], i)
+      }
+      return accu
+    }
+    // console.log(
+    //   myReduce(
+    //     ['Harden', 'Harris', 'Maxey', 'Embiid', 'Tucker', 'Niang', 'House', 'Melton', 'Korkmarz'],
+    //     (accu, curr, index) => {
+    //       accu.push(`${index} - ${curr}`)
+    //       return accu
+    //     },
+    //     []
+    //   )
+    // )
+    let ts = +new Date()
+    for (let i = 0; i < 10000; i++) {
+      setTimeout(() => {
+        for (let i = 0; i < 10000; i++) {
+          console.log(111)
+        }
+        let now = Date.now()
+        document.write(`<div>${now - ts}</div>`)
+        ts = now
+      }, 0)
+    }
+  </script>
+</body>
+</html>

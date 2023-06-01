@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    body {
+      margin: 0;
+    }
+    #app {
+      background-color: blueviolet;
+      overflow: hidden;
+    }
+    p {
+      font-size: 28rem;
+      margin: 0;
+    }
+    img {
+      display: block;
+      width: 750rem;
+      height: auto;
+    }
+    .border-box {
+      border: 1px solid red;
+    }
+    .border-box2 {
+      border: 1rem solid red;
+      font-size: 24rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <p>afsfesgdsg</p>
+    <img src="https://static.leetcode.cn/cn-mono-assets/production/assets/logo-light-cn.7c8374e7.svg" alt="">
+    <div class="border-box">asdggsd</div>
+    <div class="border-box2">asdggsd</div>
+  </div>
+  <script>
+    // 动态设置 viewport 的 initial-scale
+    var viewport = document.querySelector("meta[name=viewport]");
+    var dpr = window.devicePixelRatio || 1; // 获取 dpr
+    var scale = 1 / dpr;
+    viewport.setAttribute(
+      "content",
+      "width=device-width," +
+        "initial-scale=" +
+        scale +
+        ", maximum-scale=" +
+        scale +
+        ", minimum-scale=" +
+        scale +
+        ", user-scalable=no"
+    );
+    const UI_WIDTH = 750
+    document.querySelector('html').style.fontSize = `${document.documentElement.clientWidth / UI_WIDTH}px`
+    console.log(document.documentElement.clientWidth)
+  </script>
+</body>
+</html>

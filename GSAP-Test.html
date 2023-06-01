@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GSAP-Test</title>
+  <style>
+    body { margin: 0; }
+    #app {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100vw;
+      padding-top: 20vh;
+    }
+    .table {
+    }
+    .thead {
+      background-color: #ddd;
+    }
+    .tr {
+      display: flex;
+      position: relative;
+      color: #f00;
+      overflow: hidden;
+    }
+    .td {
+    }
+    .tr .td:nth-child(1) {
+      width: 40px;
+    }
+    .tr .td:nth-child(2) {
+      width: 80px;
+    }
+    .tr .td:nth-child(3) {
+      flex: 1;
+    }
+    .tr .td:nth-child(4) {
+      width: 40px;
+    }
+    .eliminate {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #000;
+      color: #ddd;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div v-for="item in 16" :key="item" class="anime">nice</div>
+    <button @click="eliminate">淘汰</button>
+    <div class="table">
+      <div class="thead">
+        <div class="tr">
+          <div class="td">Rank</div>
+          <div class="td">Team</div>
+          <div class="td">Heros</div>
+          <div class="td">Pts</div>
+        </div>
+      </div>
+      <div class="tbody">
+        <div v-for="item in list"
+          :key="item.team"
+          :class="['tr', item.wipe ? 'wipe' : null]">
+          <div class="td">{{ item.rank }}</div>
+          <div class="td">{{ item.team }}</div>
+          <div class="td">{{ item.heros }}</div>
+          <div class="td">{{ item.pts }}</div>
+          <div v-if="item.wipe" class="eliminate">淘汰！</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script>
+  <script>
+    const app = new Vue({
+      el: '#app',
+      data: {
+        tl: null,
+        list: [
+          { "rank": 1, "team": "中国", "heros": "孙悟空, 哪吒, 李白", "pts": 20, wipe: true },
+          { "rank": 2, "team": "希腊", "heros": "赫拉克勒斯, 阿喀琉斯, 波塞冬", "pts": 20, wipe: false },
+          { "rank": 3, "team": "挪威", "heros": "奥丁, 托尔, 弗雷", "pts": 20, wipe: false },
+          { "rank": 4, "team": "埃及", "heros": "拉, 伊西斯, 赛特", "pts": 20, wipe: false },
+          { "rank": 5, "team": "日本", "heros": "源义经, 花木兰, 安倍晴明", "pts": 20, wipe: false },
+          { "rank": 6, "team": "印度", "heros": "克里须那, 维什努, 伽梵那", "pts": 20, wipe: false },
+          { "rank": 7, "team": "阿拉伯", "heros": "阿里巴巴, 辛巴达, 阿里郎", "pts": 20, wipe: false },
+          { "rank": 8, "team": "意大利", "heros": "罗密欧, 朱丽叶, 奥赛罗", "pts": 20, wipe: false },
+          { "rank": 9, "team": "阿兹特克", "heros": "克库尔坎, 女神波克, 女神提托瓦特", "pts": 20, wipe: false },
+          { "rank": 10, "team": "北欧", "heros": "洛基, 尼德霍格, 海姆达尔", "pts": 20, wipe: false },
+          { "rank": 11, "team": "英格兰", "heros": "亚瑟王, 罗宾汉, 梅林", "pts": 20, wipe: false },
+          { "rank": 12, "team": "波兰", "heros": "波兰公主, 火焰鸟, 多勒米什", "pts": 20, wipe: false },
+          { "rank": 13, "team": "埃塞俄比亚", "heros": "哈利古拉斯, 瓦斯塔, 神谕者", "pts": 20, wipe: false },
+          { "rank": 14, "team": "China", "heros": "关羽, 刘备, 张飞", "pts": 20, wipe: false },
+          { "rank": 15, "team": "苏格兰", "heros": "马克白, 威廉·华莱士, 玛丽女王", "pts": 20, wipe: false },
+          { rank: 16, team: 'Aztec', heros: 'Huitzilopochtli, Quetzalcoatl, Tlaloc', pts: 15, wipe: false },
+          { rank: 17, team: 'Inca', heros: 'Inti, Pachamama, Viracocha', pts: 15, wipe: false },
+          { rank: 18, team: 'Maya', heros: 'Ah Puch, Chaac, Hunahpu', pts: 15, wipe: false },
+          { rank: 19, team: 'Celtic', heros: 'Cernunnos, Morrigan, Lugh', pts: 15, wipe: false },
+          { rank: 20, team: 'Norse', heros: 'Freyr, Hel, Thor', pts: 15, wipe: false },
+        ],
+      },
+      methods: {
+        eliminate () {
+          this.tl.from('.eliminate', { x: '-100%' })
+            .to('.eliminate', { x: 0 })
+            .to('.wipe', { filter: 'grayscale(100%)' })
+            .to('.eliminate', { x: '-100%', delay: 1 })
+        }
+      },
+      mounted () {
+        this.tl = gsap.timeline({ duration: 1 })
+        this.eliminate()
+      },
+    })
+  </script>
+</body>
+</html>
